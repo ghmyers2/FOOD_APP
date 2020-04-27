@@ -37,7 +37,7 @@ public final class WebApi {
     private static final String TAG = "WebApi";
 
     /** The URL at which the server is hosted. */
-    public static final String API_BASE = "https://developers.zomato.com/api";
+    public static final String API_BASE = "https://developers.zomato.com/api/v2.1";
 
     /** The URL at which the webserver socket is hosted. */
     public static final String WEBSOCKET_BASE = "wss://cs125-cloud.cs.illinois.edu/Fall2019-MP";
@@ -84,11 +84,6 @@ public final class WebApi {
             Log.v(TAG, "Creating request queue");
             requestQueue = Volley.newRequestQueue(context.getApplicationContext());
         }
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Log.e(TAG, "startRequest called before Firebase Authentication login");
-            throw new IllegalStateException("No user is logged in");
-        }
         Response.Listener<String> serverResponseListener = stringResponse -> {
             if (stringResponse == null || stringResponse.isEmpty()) {
                 Log.v(TAG, "Delivering empty response from " + url);
@@ -115,34 +110,31 @@ public final class WebApi {
                 errorListener.onErrorResponse(error);
             }
         };
-        user.getIdToken(false).addOnSuccessListener(result ->
-                requestQueue.add(new StringRequest(method, url, serverResponseListener, serverErrorListener) {
-                    {
-                        Log.v(TAG, "startRequest creating Volley request (received Firebase ID token)");
-                    }
-                    @Override
-                    public byte[] getBody() throws AuthFailureError {
-                        if (body == null) {
-                            return super.getBody();
-                        } else {
-                            return body.toString().getBytes();
-                        }
-                    }
-                    @Override
-                    public String getBodyContentType() {
-                        if (body == null) {
-                            return super.getBodyContentType();
-                        } else {
-                            return "application/json";
-                        }
-                    }
-                    @Override
-                    public Map<String, String> getHeaders() {
-                        return Collections.singletonMap("Firebase-Token", result.getToken());
-                    }
-                })
-        ).addOnFailureListener(e -> errorListener.onErrorResponse(new VolleyError(e)));
-        Log.v(TAG, "startRequest started getIdToken");
+        requestQueue.add(new StringRequest(method, url, serverResponseListener, serverErrorListener) {
+            {
+                Log.v(TAG, "startRequest creating Volley request (received Firebase ID token)");
+            }
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                if (body == null) {
+                    return super.getBody();
+                } else {
+                    return body.toString().getBytes();
+                }
+            }
+            @Override
+            public String getBodyContentType() {
+                if (body == null) {
+                    return super.getBodyContentType();
+                } else {
+                    return "application/json";
+                }
+            }
+            @Override
+            public Map<String, String> getHeaders() {
+                return Collections.singletonMap("user-key", "3e84faad91d942fb24f09347117932db");
+            }
+        });
     }
 
     /**
