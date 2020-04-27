@@ -150,6 +150,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 markerOptions.position(latLng);
                 markerOptions.title("Current location");
                 locDetails(latLng.latitude, latLng.longitude);
+                setUpRestPoints();
                 if (mCurrLocMarker == null) {
                     //move map camera
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 9));
