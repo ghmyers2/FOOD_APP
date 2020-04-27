@@ -134,7 +134,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationCallback mLocationCallback = new LocationCallback() {
         /**
          * Gets the user's most recent location, places a marker
-         * at that location and centers the view on this location.
+         * at that location and centers the view on this location. a
          * @param locationResult Used to retrieve list of all location updates from mFusedLocClient I think?
          */
         @Override
