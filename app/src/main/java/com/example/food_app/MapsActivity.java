@@ -172,6 +172,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mFusedLocClient.requestLocationUpdates(mLocReq, mLocationCallback, Looper.myLooper());
         mMap.setMyLocationEnabled(true);
         mMap.setOnMarkerClickListener(this);
+        //yo
     }
     int i = 0;
     LocationCallback mLocationCallback = new LocationCallback() {
