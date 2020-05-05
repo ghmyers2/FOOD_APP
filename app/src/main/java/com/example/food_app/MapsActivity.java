@@ -3,6 +3,7 @@ package com.example.food_app;
 import androidx.fragment.app.FragmentActivity;
 
 import android.app.DownloadManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.textclassifier.ConversationActions;
 import android.widget.Toast;
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -43,17 +45,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
-    private ArrayList<Restaurant> nearbyRestaurants;
+    private ArrayList<Restaurant> nearbyRestaurants = new ArrayList<>();
+    private ArrayList<String> JSONArray = new ArrayList<>();
     private final int PERMISSION_REQUEST_CONSTANT = 1;
     private LocationRequest mLocReq = new LocationRequest();
     private Marker mCurrLocMarker;
     private FusedLocationProviderClient mFusedLocClient;
+    private HashMap<Marker,Restaurant> markerRestaurantHashMap = new HashMap<>();
+
 
     private void locDetails(double latitude, double longitude) {
         String latString = String.valueOf(latitude);
@@ -63,6 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Request.Method.GET, null, response -> {
             final JsonObject resp = response;
             final JsonArray nearbyRest = resp.getAsJsonArray("nearby_restaurants");
+            nearbyRestaurants = new ArrayList<>();
             for (int i = 0; i < nearbyRest.size(); i++) {
                 final JsonObject currRestJSON = nearbyRest.get(i).getAsJsonObject().getAsJsonObject("restaurant");
                 final JsonObject currRestLocJSON = currRestJSON.get("location").getAsJsonObject();
@@ -73,7 +80,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 final double currRestLat = Double.valueOf(currRestLocJSON.get("latitude").getAsString());
                 final double currRestLong = Double.valueOf(currRestLocJSON.get("longitude").getAsString());
                 Restaurant currRestaurant = new Restaurant(currRestName, currRestPrice42, currRestURL, currRestCuis, currRestLat, currRestLong);
+                JSONArray.add(currRestJSON.toString());
                 nearbyRestaurants.add(currRestaurant);
+//                System.out.println("LOC DETAILS");
+//                System.out.println(nearbyRestaurants);
             }
             }, error -> {
                     Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
@@ -109,11 +119,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             System.out.println("We have permission!");
         }
     }
+    public boolean onMarkerClick(final Marker marker) {
+        LatLng markerPos = marker.getPosition();
+        for (Restaurant r : nearbyRestaurants) {
+            if (new LatLng(r.getLatitude(), r.getLongitude()).equals(markerPos)) {
+                String name = r.getName();
+                String prices = "\n\nPrice for two: " + r.getPrice();
+                String cuisines = "\n\nCuisine(s) offered: " + r.getCuisines();
+                String info = prices + cuisines;
+                String link = r.getUrl();
+                Intent intent = new Intent(MapsActivity.this, Pop.class);
+                intent.putExtra("Heading", name);
+                intent.putExtra("Info", info);
+                intent.putExtra("Link", link);
+                startActivity(intent);
+            }
+        }
+        return false;
+    }
+
     public void setUpRestPoints() {
+        System.out.println("SET UP REST POINTS");
+        System.out.println(nearbyRestaurants);
+        if (nearbyRestaurants.size() == 0) {
+            return;
+        }
+        System.out.println(nearbyRestaurants.get(nearbyRestaurants.size() - 1).getName());
+        mMap.clear();
         for (int i = 0; i < nearbyRestaurants.size(); i++) {
             LatLng currRest = new LatLng(nearbyRestaurants.get(i).getLatitude(), nearbyRestaurants.get(i).getLongitude());
-            mMap.addMarker(new MarkerOptions().position(currRest).title(nearbyRestaurants.get(i).getName()));
+            MarkerOptions curRestMarkerO = new MarkerOptions().position(currRest).title(nearbyRestaurants.get(i).getName()).snippet("Cuisine Style: "+ nearbyRestaurants.get(i).getCuisines() + "\n" + "Avg. Price For Two: " + nearbyRestaurants.get(i).getPrice());
+            mMap.addMarker(curRestMarkerO);
+            Marker curMarker = mMap.addMarker(curRestMarkerO);
+            Restaurant r = nearbyRestaurants.get(i);
+            System.out.println( "REST IN POINTS"  + r);
+            System.out.println( "MARKER IN POINTS"  + curMarker);
+            //markerRestaurantHashMap.put(curMarker,r);
         }
+        //mMap.setOnMarkerClickListener(this);
     }
 
 
@@ -128,7 +171,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mFusedLocClient.requestLocationUpdates(mLocReq, mLocationCallback, Looper.myLooper());
         mMap.setMyLocationEnabled(true);
-
+        mMap.setOnMarkerClickListener(this);
     }
     int i = 0;
     LocationCallback mLocationCallback = new LocationCallback() {
@@ -155,6 +198,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     //move map camera
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 9));
                 }
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
                 mCurrLocMarker = mMap.addMarker(markerOptions);
             }
         }

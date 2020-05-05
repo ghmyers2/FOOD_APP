@@ -22,6 +22,7 @@ import com.neovisionaries.ws.client.WebSocketFactory;
 import com.neovisionaries.ws.client.WebSocketFrame;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -132,7 +133,8 @@ public final class WebApi {
             }
             @Override
             public Map<String, String> getHeaders() {
-                return Collections.singletonMap("user-key", "3e84faad91d942fb24f09347117932db");
+                return Collections.singletonMap("user-key", "3ee2fd24bf2ae7079e57350abb9c2643");
+                //return Collections.singletonMap("user-key", "3e84faad91d942fb24f09347117932db");
             }
         });
     }
